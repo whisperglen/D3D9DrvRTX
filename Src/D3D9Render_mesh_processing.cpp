@@ -90,6 +90,7 @@ static inline void calcEnvMapping(FRenderVert& vert, const DirectX::XMMATRIX& sc
 	vert.V = (XMVectorGetY(envNorm) + 1.0) * 0.5 * 256.0;
 }
 
+#if !UNDYING
 void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, RenderList& renderList, SpecialCoord* specialCoord) {
 #ifdef UTGLR_DEBUG_SHOW_CALL_COUNTS
 	{
@@ -230,15 +231,9 @@ void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, Render
 #endif  // UTGLR_NO_LODMESH
 	{
 		isLod = false;
-#if UNDYING
-		numVerts = mesh->FrameVerts(actor);
-		samples = New<FVector>(GMem, numVerts);
-		mesh->GetFrame(samples, sizeof(samples[0]), GMath.UnitCoords, actor, frame);
-#else
 		numVerts = mesh->FrameVerts;
 		samples = New<FVector>(GMem, numVerts);
 		mesh->GetFrame(samples, sizeof(samples[0]), GMath.UnitCoords, actor);
-#endif
 		numTris = mesh->Tris.Num();
 	}
 
@@ -462,7 +457,214 @@ void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, Render
 
 	unguard;
 }
+#else
 
+void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, RenderList& renderList, SpecialCoord* specialCoord) {
+#ifdef UTGLR_DEBUG_SHOW_CALL_COUNTS
+	{
+		static int si;
+		dout << L"utd3d9r: renderMeshActor = " << si++ << std::endl;
+	}
+#endif
+	using namespace DirectX;
+	guard(UD3D9RenderDevice::renderMeshActor);
+	UMesh* mesh = actor->Mesh;
+	if (!mesh)
+		return;
+
+	//dout << "rendering actor " << actor->GetName() << std::endl;
+	XMMATRIX actorMatrix = XMMatrixIdentity();
+
+	mesh->SetResolution(actor, -1);
+	TRefArray<FMeshTri> tris = mesh->GetTris(actor);
+	INT numVerts = mesh->FrameVerts(actor);
+
+	// The old switcheroo, trick the game to not transform the mesh verts to object position
+	FVector origLoc = actor->Location;
+	FVector origPrePiv = actor->PrePivot;
+	FRotator origRot = actor->Rotation;
+	FLOAT origScale = actor->DrawScale;
+	actor->Location = FVector(0, 0, 0);
+	actor->PrePivot = FVector(0, 0, 0);
+	actor->Rotation = FRotator(0, 0, 0);
+	USkelMesh* skelMesh = Cast<USkelMesh>(actor->Mesh);
+	if (skelMesh) {
+		// Don't exactly know what this is doing / why it works but it took 3 weeks to figure out 💀
+		// The mesh has some kind of pre-scale offset that itself gets scaled with the DrawScale
+		// eg. groundskeeper is offset in Z ~ 3.75 and 3.5714 before scale of 1.05, this gets me that number.
+		FPlace offsetScaled = skelMesh->ToActor(actor);
+		actor->DrawScale = 1.0f;
+		FPlace offsetIdentity = skelMesh->ToActor(actor);
+		XMMATRIX matLoc = XMMatrixTranslationFromVector(FVecToDXVec(offsetScaled.Pos - offsetIdentity.Pos));
+		actorMatrix *= matLoc;
+	}
+	actor->DrawScale = 1.0f;
+
+	FVector* samples = New<FVector>(GMem, numVerts);
+	mesh->GetFrame(samples, sizeof(samples[0]), GMath.UnitCoords, actor, frame);
+	INT numTris = tris.Num();
+
+	actor->Location = origLoc;
+	actor->PrePivot = origPrePiv;
+	actor->Rotation = origRot;
+	actor->DrawScale = origScale;
+
+	bool renderAsParticles = actor->bParticles;
+	if (!renderAsParticles) {
+		XMMATRIX matScale = XMMatrixScaling(actor->DrawScale, actor->DrawScale, actor->DrawScale);
+		actorMatrix *= matScale;
+	}
+	if (specialCoord && specialCoord->enabled) {
+		actorMatrix *= FCoordToDXMat(specialCoord->coord);
+		actorMatrix *= FCoordToDXMat(specialCoord->baseCoord);
+	}
+	else {
+		XMMATRIX matLoc = XMMatrixTranslationFromVector(FVecToDXVec(actor->Location + actor->PrePivot));
+		XMMATRIX matRot = FRotToDXRotMat(actor->Rotation);
+		actorMatrix *= matRot;
+		actorMatrix *= matLoc;
+	}
+
+	FTime currentTime = frame->Viewport->CurrentTime;
+	DWORD baseFlags = getBasePolyFlags(actor);
+
+	if (renderAsParticles) {
+		FLOAT lux = Clamp(actor->ScaleGlow * 0.5f + actor->AmbientGlow / 256.f, 0.f, 1.f);
+		FPlane color = FVector(lux, lux, lux);
+		if (GIsEditor && (baseFlags & PF_Selected)) {
+			color = color * 0.4 + FVector(0.0, 0.6, 0.0);
+		}
+		UTexture* tex = actor->Texture->Get(currentTime);
+		for (INT i = 0; i < numVerts; i++) {
+			FVector& sample = samples[i];
+			if (tex) {
+
+				// Transform the local-space point into world-space
+				XMVECTOR xpoint = FVecToDXVec(sample);
+				xpoint = XMVector3Transform(xpoint, actorMatrix);
+				FVector point = DXVecToFVec(xpoint);
+
+				FTextureInfo texInfo;
+				tex->Lock(texInfo, currentTime, -1, this);
+				renderSpriteGeo(frame, point, actor->DrawScale, texInfo, baseFlags, color);
+				tex->Unlock(texInfo);
+			}
+		}
+		return;
+	}
+
+	UniqueValueArray<UTexture*> textures(mesh->Textures.Num());
+	UTexture* envTex = nullptr;
+
+	// Lock all mesh textures
+	for (int i = 0; i < mesh->Textures.Num(); i++) {
+		UTexture* tex = mesh->GetTexture(i, actor);
+		if (!tex && actor->Texture) {
+			tex = actor->Texture;
+		}
+		else if (!tex) {
+			continue;
+		}
+		tex = tex->Get(currentTime);
+		textures.insert(i, tex);
+		envTex = tex;
+	}
+	if (actor->Texture) {
+		envTex = actor->Texture;
+	}
+	else if (actor->Region.Zone && actor->Region.Zone->EnvironmentMap) {
+		envTex = actor->Region.Zone->EnvironmentMap;
+	}
+	else if (actor->Level->EnvironmentMap) {
+		envTex = actor->Level->EnvironmentMap;
+	}
+	if (!envTex) {
+		return;
+	}
+
+	bool fatten = actor->Fatness != 128;
+	FLOAT fatness = (actor->Fatness / 16.0) - 8.0;
+
+	FVector* normals = NewZeroed<FVector>(GMem, numVerts);
+
+	// Calculate normals
+	// Already zeroed on new
+	for (int i = 0; i < numTris; i++) {
+		int sampleIdx[3];
+		const FMeshTri& tri = tris(i);
+		for (int j = 0; j < 3; j++) {
+			sampleIdx[j] = tri.iVertex[j];
+		}
+		FVector fNorm = (samples[sampleIdx[1]] - samples[sampleIdx[0]]) ^ (samples[sampleIdx[2]] - samples[sampleIdx[0]]);
+		for (int j = 0; j < 3; j++) {
+			normals[sampleIdx[j]] += fNorm;
+		}
+	}
+	for (int i = 0; i < numVerts; i++) {
+		XMVECTOR normal = FVecToDXVec(normals[i]);
+		normal = XMVector3Normalize(normal);
+		normals[i] = DXVecToFVec(normal);
+	}
+
+	XMMATRIX screenSpaceMat = actorMatrix * FCoordToDXMat(frame->Uncoords);
+
+	ActorRenderData& renderData = renderList.emplace_back();
+	renderData.actorMatrix = ToD3DMATRIX(actorMatrix);
+	SurfKeyBucketVector<UTexture*, FRenderVert>& surfaceBuckets = renderData.surfaceBuckets;
+	surfaceBuckets.reserve(numTris);
+
+	int vertMaxCount = numTris * 3;
+	// Process all triangles on the mesh
+	for (INT i = 0; i < numTris; i++) {
+		INT sampleIdx[3];
+		DWORD polyFlags;
+		INT texIdx;
+		FMeshUV triUV[3];
+		const FMeshTri& tri = tris(i);
+		for (int j = 0; j < 3; j++) {
+			sampleIdx[j] = tri.iVertex[j];
+			triUV[j] = tri.Tex[j];
+		}
+		texIdx = tri.TextureIndex;
+		polyFlags = tri.PolyFlags;
+
+		polyFlags |= baseFlags;
+
+		bool environMapped = polyFlags & PF_Environment;
+		UTexture** tex = textures.at(texIdx);
+		if (environMapped || tex == nullptr) {
+			tex = &envTex;
+		}
+		float scaleU = (*tex)->Scale * (*tex)->USize / 256.0;
+		float scaleV = (*tex)->Scale * (*tex)->VSize / 256.0;
+
+		// Sort triangles into surface/flag groups
+		std::vector<FRenderVert>& pointsVec = surfaceBuckets.get(*tex, polyFlags);
+		pointsVec.reserve(vertMaxCount);
+		for (INT j = 0; j < 3; j++) {
+			FRenderVert& vert = pointsVec.emplace_back();
+			FVector pos = samples[sampleIdx[j]];
+			const FVector& norm = normals[sampleIdx[j]];
+			if (fatten) {
+				pos += norm * fatness;
+			}
+			vert.pos = pos;
+			vert.norm = norm;
+			vert.U = triUV[j].U;
+			vert.V = triUV[j].V;
+
+			// Calculate the environment UV mapping
+			if (environMapped) {
+				calcEnvMapping(vert, screenSpaceMat, frame);
+			}
+			vert.U *= scaleU;
+			vert.V *= scaleV;
+		}
+	}
+
+	unguard;
+}
+#endif
 
 #if UNREAL_GOLD_OLDUNREAL
 void UD3D9RenderDevice::renderStaticMeshActor(FSceneNode* frame, AActor* actor, RenderList& renderList, SpecialCoord* specialCoord) {
