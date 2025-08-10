@@ -310,6 +310,9 @@ void UD3D9Render::DrawWorld(FSceneNode* frame) {
 #if !KLINGON_HONOR_GUARD
 		isVisible &= !isOwned || !actor->bOwnerNoSee || (isOwned && frame->Viewport->Actor->bBehindView);
 #endif
+#if UNDYING
+		isVisible &= viewport->Actor->ScryeOpacity(actor) > 0.0f;
+#endif
 		if (isVisible) {
 			if (actor->IsA(AMover::StaticClass())) {
 				objs.movers.push_back((ABrush*)actor);
