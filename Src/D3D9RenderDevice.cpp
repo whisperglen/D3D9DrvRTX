@@ -899,6 +899,7 @@ UBOOL UD3D9RenderDevice::SetRes(INT NewX, INT NewY, INT NewColorBytes, UBOOL Ful
 
 	// Initialize RTX Remix API
 	if (!remixInterfaceInitialized){
+		guard(remixapi::bridge_initRemixApi)
 		remixapi_ErrorCode remixErr = remixapi::bridge_initRemixApi(&remixInterface);
 		if (remixErr == REMIXAPI_ERROR_CODE_SUCCESS) {
 			remixInterfaceInitialized = true;
@@ -906,6 +907,7 @@ UBOOL UD3D9RenderDevice::SetRes(INT NewX, INT NewY, INT NewColorBytes, UBOOL Ful
 		} else {
 			debugf(NAME_D3D9DrvRTX, TEXT("Failed to initialize RTX Remix API! Error: %d"), remixErr);
 		}
+		unguard;
 	}
 
 	//Reset previous SwapBuffers status to okay
