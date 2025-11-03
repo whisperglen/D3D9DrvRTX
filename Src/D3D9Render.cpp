@@ -571,7 +571,7 @@ void UD3D9Render::drawFrame(FSceneNode* frame, UD3D9RenderDevice* d3d9Dev, Model
 		}
 		for (AActor* actor : visibleActors) {
 			UBOOL bTranslucent = actor->Style == STY_Translucent;
-#if RUNE
+#if RUNE || UNDYING
 			bTranslucent |= actor->Style == STY_AlphaBlend;
 #endif
 			if ((pass == RPASS::NONSOLID && bTranslucent) || (pass == RPASS::SOLID && !bTranslucent)) {

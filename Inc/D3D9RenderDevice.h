@@ -335,6 +335,14 @@ static inline DWORD getBasePolyFlags(AActor* actor) {
 	else if (actor->Style == STY_Modulated) {
 		basePolyFlags |= PF_Modulated;
 	}
+#if UNDYING
+	else if (actor->Style == STY_AlphaBlend) {
+		basePolyFlags |= PF_Modulated | PF_Translucent;
+	}
+	else if (actor->Style == STY_AlphaBlendZ) {
+		basePolyFlags |= PF_Modulated | PF_Translucent | PF_Occlude;
+	}
+#endif
 
 	if (actor->bNoSmooth) basePolyFlags |= PF_NoSmooth;
 	if (actor->bSelected) basePolyFlags |= PF_Selected;
@@ -1100,6 +1108,18 @@ class UD3D9RenderDevice : public RENDERDEVICE_SUPER {
 		else if (PolyFlags & PF_Translucent) {
 			PolyFlags &= ~PF_Masked;
 		}
+
+#if UNDYING
+		// Clear the unused NoPass flag, which == PF_AlphaBlend
+		static_assert(PF_NoPass == PF_AlphaBlend);
+		PolyFlags &= ~PF_NoPass;
+		if (PolyFlags & PF_Translucent && PolyFlags & PF_Modulated) {
+			// Translucent + Modulated indicates AlphaBlend
+			PolyFlags |= PF_AlphaBlend;
+			// Don't act as these anymore
+			PolyFlags &= ~(PF_Translucent | PF_Modulated);
+		}
+#endif
 
 		//Only check relevant blend flags
 		DWORD blendFlags = PolyFlags & (
