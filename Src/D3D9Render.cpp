@@ -616,7 +616,7 @@ void UD3D9Render::drawActorSwitch(FSceneNode* frame, UD3D9RenderDevice* d3d9Dev,
 		}
 	}
 	else
-#endif
+#endif // RUNE
 #if UTGLR_HP_ENGINE
 	if (actor->DrawType == DT_Particles) {
 		d3d9Dev->setCompatMatrix(frame);
@@ -631,8 +631,15 @@ void UD3D9Render::drawActorSwitch(FSceneNode* frame, UD3D9RenderDevice* d3d9Dev,
 		DrawActorSprite(frame, &sprite);
 	}
 	else
-#endif
-#endif
+#endif // BROTHER_BEAR
+#endif // UTGLR_HP_ENGINE
+#if UNDYING
+	if (actor->DrawType == DT_Particles) {
+		d3d9Dev->setCompatMatrix(frame);
+		FDynamicSprite sprite(actor);
+		DrawActorSpriteParticles(frame, &sprite);
+	}
+#endif // UNDYING
 #if UNREAL_GOLD_OLDUNREAL
 	if (actor->RealBasedActors) {
 		if (actor->DrawType == DT_Mesh && actor->Mesh && actor->MeshInstance) {
@@ -658,7 +665,7 @@ void UD3D9Render::drawActorSwitch(FSceneNode* frame, UD3D9RenderDevice* d3d9Dev,
 	// Terrain actor vftable can be nullptr so check first!
 	if (*((void**)actor) && actor->OverrideMeshRender(frame)) {}
 	else
-#endif
+#endif // UNREAL_GOLD_OLDUNREAL
 	if ((actor->DrawType == DT_Sprite || actor->DrawType == DT_SpriteAnimOnce || (frame->Viewport->Actor->ShowFlags & SHOW_ActorIcons)) && actor->Texture) {
 		d3d9Dev->renderSprite(frame, actor);
 	}
