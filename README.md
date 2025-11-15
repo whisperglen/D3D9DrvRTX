@@ -14,6 +14,7 @@ This is a custom render device for the Unreal Engine, optimized for use with NVI
 - Harry Potter Chamber of Secrets
 - Brother Bear
 - Star Trek: The Next Generation - Klingon Honor Guard (v1.1)
+- Clive Barker's Undying (v1.1)
 
 ## Requirements
 - One of the supported games
