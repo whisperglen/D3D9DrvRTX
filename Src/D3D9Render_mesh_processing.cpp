@@ -264,6 +264,8 @@ void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, Render
 		}
 #if UNREAL_GOLD_OLDUNREAL
 		UTexture* tex = actor->Texture->Get();
+#elif DS9_THE_FALLEN
+		UTexture* tex = actor->Texture->Get(currentTime.GetFloat());
 #else
 		UTexture* tex = actor->Texture->Get(currentTime);
 #endif
@@ -289,6 +291,8 @@ void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, Render
 				texInfo = *tex->GetTexture(-1, this);
 #elif KLINGON_HONOR_GUARD
 				tex->GetInfo(texInfo, currentTime);
+#elif DS9_THE_FALLEN
+				tex->Lock(texInfo, currentTime.GetFloat(), -1, this);
 #else
 				tex->Lock(texInfo, currentTime, -1, this);
 #endif
@@ -315,6 +319,8 @@ void UD3D9RenderDevice::renderMeshActor(FSceneNode* frame, AActor* actor, Render
 		}
 #if UNREAL_GOLD_OLDUNREAL
 		tex = tex->Get();
+#elif DS9_THE_FALLEN
+		tex = tex->Get(currentTime.GetFloat());
 #else
 		tex = tex->Get(currentTime);
 #endif

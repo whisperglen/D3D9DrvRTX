@@ -521,6 +521,8 @@ void UD3D9Render::drawFrame(FSceneNode* frame, UD3D9RenderDevice* d3d9Dev, Model
 					*texInfo = *texture->GetTexture(-1, d3d9Dev);
 #elif KLINGON_HONOR_GUARD
 					texture->GetInfo(*texInfo, frame->Viewport->CurrentTime);
+#elif DS9_THE_FALLEN
+					texture->Lock(*texInfo, frame->Viewport->CurrentTime.GetFloat(), -1, d3d9Dev);
 #else
 					texture->Lock(*texInfo, frame->Viewport->CurrentTime, -1, d3d9Dev);
 #endif
@@ -689,6 +691,8 @@ void UD3D9Render::getSurfaceDecals(FSceneNode* frame, const SurfaceData& surface
 		if (decal->Actor->Texture) {
 #if UNREAL_GOLD_OLDUNREAL
 			texture = decal->Actor->Texture->Get();
+#elif DS9_THE_FALLEN
+			texture = decal->Actor->Texture->Get(viewport->CurrentTime.GetFloat());
 #else
 			texture = decal->Actor->Texture->Get(viewport->CurrentTime);
 #endif
@@ -700,6 +704,8 @@ void UD3D9Render::getSurfaceDecals(FSceneNode* frame, const SurfaceData& surface
 			texInfo = &lockedTextures[texture];
 #if UNREAL_GOLD_OLDUNREAL
 			*texInfo = *texture->GetTexture(-1, viewport->RenDev);
+#elif DS9_THE_FALLEN
+			texture->Lock(*texInfo, viewport->CurrentTime.GetFloat(), -1, viewport->RenDev);
 #else
 			texture->Lock(*texInfo, viewport->CurrentTime, -1, viewport->RenDev);
 #endif

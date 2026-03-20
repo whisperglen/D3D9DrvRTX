@@ -300,6 +300,13 @@ static inline UTexture* getTextureWithoutNext(UTexture* texture, FTime time, FLO
 	UTexture* renderTexture = texture->Get();
 
 	texture->AnimCurrent = oldCur;
+#elif DS9_THE_FALLEN
+	UTexture* oldCur = texture->AnimCur;
+	texture->AnimCur = NULL;
+
+	UTexture* renderTexture = texture->Get(time.GetFloat());
+
+	texture->AnimCur = oldCur;
 #else
 	UTexture* oldCur = texture->AnimCur;
 	texture->AnimCur = NULL;

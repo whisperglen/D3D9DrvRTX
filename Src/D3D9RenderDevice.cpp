@@ -3177,6 +3177,8 @@ void UD3D9RenderDevice::renderSprite(FSceneNode* frame, AActor* actor) {
 	} else {
 #if UNREAL_GOLD_OLDUNREAL
 		renderTexture = texture->Get();
+#elif DS9_THE_FALLEN
+		renderTexture = texture->Get(currTime.GetFloat());
 #else
 		renderTexture = texture->Get(currTime);
 #endif
@@ -3187,6 +3189,8 @@ void UD3D9RenderDevice::renderSprite(FSceneNode* frame, AActor* actor) {
 	texInfo = *renderTexture->GetTexture(-1, this);
 #elif KLINGON_HONOR_GUARD
 	renderTexture->GetInfo(texInfo, currTime);
+#elif DS9_THE_FALLEN
+	renderTexture->Lock(texInfo, currTime.GetFloat(), -1, this);
 #else
 	renderTexture->Lock(texInfo, currTime, -1, this);
 #endif
@@ -3345,6 +3349,8 @@ void UD3D9RenderDevice::renderSurfaceBuckets(const ActorRenderData& renderData, 
 		FTextureInfo texInfo{};
 #if KLINGON_HONOR_GUARD
 		tex->GetInfo(texInfo, currentTime);
+#elif DS9_THE_FALLEN
+		tex->Lock(texInfo, currentTime.GetFloat(), -1, this);
 #else
 		tex->Lock(texInfo, currentTime, -1, this);
 #endif
@@ -3482,6 +3488,8 @@ void UD3D9RenderDevice::renderMover(FSceneNode* frame, ABrush* mover) {
 		FPoly* poly = &model->Polys->Element(i);
 #if UNREAL_GOLD_OLDUNREAL
 		UTexture* tex = poly->Texture ? poly->Texture->Get() : viewport->Actor->Level->DefaultTexture;
+#elif DS9_THE_FALLEN
+		UTexture* tex = poly->Texture ? poly->Texture->Get(viewport->CurrentTime.GetFloat()) : viewport->Actor->Level->DefaultTexture;
 #else
 		UTexture* tex = poly->Texture ? poly->Texture->Get(viewport->CurrentTime) : viewport->Actor->Level->DefaultTexture;
 #endif
@@ -3494,6 +3502,8 @@ void UD3D9RenderDevice::renderMover(FSceneNode* frame, ABrush* mover) {
 			*texInfo = *tex->GetTexture(-1, this);
 #elif KLINGON_HONOR_GUARD
 			tex->GetInfo(*texInfo, viewport->CurrentTime);
+#elif DS9_THE_FALLEN
+			tex->Lock(*texInfo, viewport->CurrentTime.GetFloat(), -1, this);
 #else
 			tex->Lock(*texInfo, viewport->CurrentTime, -1, this);
 #endif
