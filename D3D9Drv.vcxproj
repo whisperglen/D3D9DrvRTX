@@ -182,6 +182,7 @@
     <Link>
       <DataExecutionPrevention />
       <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -216,6 +217,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <OutputFile>$(UNREAL_INSTALL_DIR)\System64\D3D9DrvRTX.dll</OutputFile>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -249,6 +251,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -282,6 +285,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <OutputFile>$(UNREAL_INSTALL_DIR)\System64\D3D9DrvRTX.dll</OutputFile>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -312,6 +316,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <DataExecutionPrevention />
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -344,6 +349,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <OutputFile>$(UNREAL_INSTALL_DIR)\System64\D3D9DrvRTX.dll</OutputFile>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -376,6 +382,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -408,6 +415,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <OutputFile>$(UNREAL_INSTALL_DIR)\System64\D3D9DrvRTX.dll</OutputFile>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\dx9sdk\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
